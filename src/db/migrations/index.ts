@@ -14,6 +14,7 @@ import { moduleApprovalsPendingApprovals } from './module-approvals-pending-appr
 import { moduleApprovalsTitleOptions } from './module-approvals-title-options.js';
 import { migration014 } from './014-tribunal-sessions.js';
 import { migration015 } from './015-tribunal-schedules.js';
+import { migration016 } from './016-tribunal-memory.js';
 
 export interface Migration {
   version: number;
@@ -35,6 +36,7 @@ const migrations: Migration[] = [
   migration013,
   migration014,
   migration015,
+  migration016,
 ];
 
 export function runMigrations(db: Database.Database): void {

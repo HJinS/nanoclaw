@@ -25,6 +25,9 @@ groups/*
 .env
 .env*
 
+# Local design specs (brainstorming artifacts, not for repo)
+docs/superpowers/
+
 # Temp files
 .tmp-*
 

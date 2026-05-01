@@ -17,6 +17,45 @@
 
 ---
 
+## This Fork — B2B Multi-Agent Framework
+
+This is a customized NanoClaw fork built for B2B project development. It adds a multi-agent pipeline on top of NanoClaw's container infrastructure, with three dedicated Discord channels for different workflows.
+
+### Discord Channels
+
+| Channel | Mode | Description |
+|---------|------|-------------|
+| `#frontend` | Fully automatic | Three-agent Tribunal Loop runs autonomously |
+| `#figma` | User-led | Agent with full Figma read/write access assists on design tasks |
+| `#backend` | User-led | Agent with Spring OpenAPI spec injected assists on backend work |
+
+### Tribunal Loop (`#frontend`)
+
+A three-agent verification pipeline that runs without human intervention:
+
+- **Owner** — writes code based on the task
+- **Reviewer** — reviews code quality and stderr output, issues fix instructions
+- **Arbiter** — makes the final call: approve or escalate to the user
+
+Loop prevention: escalates after 3 rounds or when the Reviewer flags the same issue twice in a row. On escalation, a round summary is posted in the thread with a user @mention.
+
+**Self-Healing** is built into the loop — stderr from code execution is passed directly to the Reviewer, who treats it like any other code issue.
+
+### Scheduler
+
+Cron-based triggers that auto-create Discord threads in `#frontend` and wake the Owner agent. Configured per agent group as code (no UI).
+
+### Context Injection
+
+- **Figma MCP** — default project file is always injected into the frontend Owner's context. Per-task Figma URLs can be added inline. Access is scoped to a per-group project whitelist.
+- **Spring OpenAPI** — injected into the backend agent. Pulls from a live `/v3/api-docs` endpoint, falls back to a local `openapi.yaml`/`.json` file.
+
+### Memory (RAG)
+
+SQLite FTS5 full-text search over three types of records: approved code snippets, Tribunal decision logs, and manually added domain knowledge. Relevant records are surfaced automatically at the start of each task.
+
+---
+
 ## Why I Built NanoClaw
 
 [OpenClaw](https://github.com/openclaw/openclaw) is an impressive project, but I wouldn't have been able to sleep if I had given complex software I didn't understand full access to my life. OpenClaw has nearly half a million lines of code, 53 config files, and 70+ dependencies. Its security is at the application level (allowlists, pairing codes) rather than true OS-level isolation. Everything runs in one Node process with shared memory.

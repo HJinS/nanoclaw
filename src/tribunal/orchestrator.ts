@@ -63,28 +63,19 @@ export function createTribunalSession(params: {
 
 export function getTribunalSession(id: string): TribunalSession | null {
   return (
-    (getDb()
-      .prepare('SELECT * FROM tribunal_sessions WHERE id = ?')
-      .get(id) as TribunalSession | undefined) ?? null
+    (getDb().prepare('SELECT * FROM tribunal_sessions WHERE id = ?').get(id) as TribunalSession | undefined) ?? null
   );
 }
 
-export function getTribunalSessionByThread(
-  messagingGroupId: string,
-  threadId: string,
-): TribunalSession | null {
+export function getTribunalSessionByThread(messagingGroupId: string, threadId: string): TribunalSession | null {
   return (
     (getDb()
-      .prepare(
-        "SELECT * FROM tribunal_sessions WHERE messaging_group_id = ? AND thread_id = ? AND status = 'active'",
-      )
+      .prepare("SELECT * FROM tribunal_sessions WHERE messaging_group_id = ? AND thread_id = ? AND status = 'active'")
       .get(messagingGroupId, threadId) as TribunalSession | undefined) ?? null
   );
 }
 
-export function getTribunalSessionByNanoclawSession(
-  nanoclawSessionId: string,
-): TribunalSession | null {
+export function getTribunalSessionByNanoclawSession(nanoclawSessionId: string): TribunalSession | null {
   return (
     (getDb()
       .prepare(
@@ -92,16 +83,11 @@ export function getTribunalSessionByNanoclawSession(
          WHERE (owner_session_id = ? OR reviewer_session_id = ? OR arbiter_session_id = ?)
            AND status = 'active'`,
       )
-      .get(nanoclawSessionId, nanoclawSessionId, nanoclawSessionId) as
-      | TribunalSession
-      | undefined) ?? null
+      .get(nanoclawSessionId, nanoclawSessionId, nanoclawSessionId) as TribunalSession | undefined) ?? null
   );
 }
 
-export function advanceTribunalSession(
-  tribunalSessionId: string,
-  agentMessage: string,
-): TribunalSession | null {
+export function advanceTribunalSession(tribunalSessionId: string, agentMessage: string): TribunalSession | null {
   const session = getTribunalSession(tribunalSessionId);
   if (!session || session.status !== 'active') return null;
 
@@ -116,10 +102,7 @@ export function advanceTribunalSession(
 
   if (session.current_role === 'reviewer') {
     const keywords = JSON.parse(session.last_reviewer_keywords) as string[];
-    const guard = checkLoopGuard(
-      { roundCount: session.round_count, lastReviewerKeywords: keywords },
-      agentMessage,
-    );
+    const guard = checkLoopGuard({ roundCount: session.round_count, lastReviewerKeywords: keywords }, agentMessage);
 
     if (guard.action === 'escalate') {
       updateSession(session.id, { current_role: 'arbiter', updated_at: ts });

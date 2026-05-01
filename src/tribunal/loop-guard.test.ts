@@ -17,7 +17,7 @@ describe('checkLoopGuard', () => {
       'REVIEWER_ISSUES\nstill broken\nKEYWORDS: broken',
     );
     expect(result.action).toBe('escalate');
-    expect(result.reason).toBe('max-retries');
+    if (result.action === 'escalate') expect(result.reason).toBe('max-retries');
   });
 
   it('escalates on repeated keyword after round 2', () => {
@@ -26,7 +26,7 @@ describe('checkLoopGuard', () => {
       'REVIEWER_ISSUES\nstill has null check issue\nKEYWORDS: null, check, pointer',
     );
     expect(result.action).toBe('escalate');
-    expect(result.reason).toBe('repeated-issue');
+    if (result.action === 'escalate') expect(result.reason).toBe('repeated-issue');
   });
 
   it('does not escalate on repeated keyword at round 1', () => {

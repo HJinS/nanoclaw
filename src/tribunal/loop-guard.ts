@@ -10,8 +10,20 @@ export type LoopGuardDecision =
 const MAX_ROUNDS = 3;
 
 const STOPWORDS = new Set([
-  'this', 'that', 'with', 'from', 'have', 'will', 'been', 'they',
-  'your', 'what', 'issue', 'fix', 'the', 'and',
+  'this',
+  'that',
+  'with',
+  'from',
+  'have',
+  'will',
+  'been',
+  'they',
+  'your',
+  'what',
+  'issue',
+  'fix',
+  'the',
+  'and',
 ]);
 
 export function checkLoopGuard(state: LoopGuardState, reviewerMessage: string): LoopGuardDecision {
@@ -40,9 +52,7 @@ export function checkLoopGuard(state: LoopGuardState, reviewerMessage: string): 
 }
 
 function extractKeywords(message: string): string[] {
-  const keywordsLine = message
-    .split('\n')
-    .find((l) => l.trim().toUpperCase().startsWith('KEYWORDS:'));
+  const keywordsLine = message.split('\n').find((l) => l.trim().toUpperCase().startsWith('KEYWORDS:'));
   if (keywordsLine) {
     return keywordsLine
       .replace(/^KEYWORDS:/i, '')

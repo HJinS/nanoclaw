@@ -9,8 +9,8 @@
  */
 import type Database from 'better-sqlite3';
 
-import { getRunningSessions, getActiveSessions, createPendingQuestion } from './db/sessions.js';
-import { getAgentGroup } from './db/agent-groups.js';
+import { getRunningSessions, getActiveSessions, createPendingQuestion, findSessionForAgent, createSession } from './db/sessions.js';
+import { getAgentGroup, getAllAgentGroups } from './db/agent-groups.js';
 import { getDb, hasTable } from './db/connection.js';
 import { getMessagingGroupByPlatform } from './db/messaging-groups.js';
 import {
@@ -19,6 +19,7 @@ import {
   markDelivered,
   markDeliveryFailed,
   migrateDeliveredTable,
+  nextEvenSeq,
 } from './db/session-db.js';
 import { log } from './log.js';
 import { normalizeOptions } from './channels/ask-question.js';
@@ -189,6 +190,13 @@ async function drainSession(session: Session): Promise<void> {
 
     for (const msg of undelivered) {
       try {
+        const intercepted = await handleTribunalRouting(msg, session.id, inDb);
+        if (intercepted) {
+          markDelivered(inDb, msg.id, null);
+          deliveryAttempts.delete(msg.id);
+          continue;
+        }
+
         const platformMsgId = await deliverMessage(msg, session, inDb);
         markDelivered(inDb, msg.id, platformMsgId ?? null);
         deliveryAttempts.delete(msg.id);
@@ -426,4 +434,114 @@ async function handleSystemAction(
 export function stopDeliveryPolls(): void {
   activePolling = false;
   sweepPolling = false;
+}
+
+// ── Tribunal routing hook ──────────────────────────────────────────────────
+
+/**
+ * If `nanoclawSessionId` belongs to an active TribunalSession, advance the
+ * state machine and route the agent message to the next agent. Returns true
+ * when the message was intercepted (caller should skip normal delivery).
+ */
+export async function handleTribunalRouting(
+  msg: import('./db/session-db.js').OutboundMessage,
+  nanoclawSessionId: string,
+  inDb: Database.Database,
+): Promise<boolean> {
+  let tribunalMod: typeof import('./tribunal/orchestrator.js') | null = null;
+  try {
+    tribunalMod = await import('./tribunal/orchestrator.js');
+  } catch {
+    return false;
+  }
+
+  const { getTribunalSessionByNanoclawSession, advanceTribunalSession } = tribunalMod;
+  const tribunalSession = getTribunalSessionByNanoclawSession(nanoclawSessionId);
+  if (!tribunalSession) return false;
+
+  const content = (() => {
+    try {
+      return JSON.parse(msg.content) as { text?: string };
+    } catch {
+      return {};
+    }
+  })();
+  const text = content.text ?? '';
+
+  const updated = advanceTribunalSession(tribunalSession.id, text);
+  if (!updated) return false;
+
+  if (updated.status === 'completed' || updated.status === 'escalated') {
+    // Arbiter's final message — deliver to Discord normally
+    return false;
+  }
+
+  const targetFolder =
+    updated.current_role === 'reviewer'
+      ? 'frontend-reviewer'
+      : updated.current_role === 'arbiter'
+        ? 'frontend-arbiter'
+        : 'frontend-owner';
+
+  await routeToTribunalAgent(tribunalSession, targetFolder, text, msg);
+  return true;
+}
+
+async function routeToTribunalAgent(
+  tribunalSession: import('./tribunal/orchestrator.js').TribunalSession,
+  targetFolder: string,
+  messageText: string,
+  originalMsg: import('./db/session-db.js').OutboundMessage,
+): Promise<void> {
+  const { randomUUID } = await import('node:crypto');
+  const fs = await import('node:fs');
+  const { openInboundDb: openIn, inboundDbPath } = await import('./session-manager.js');
+  const { wakeContainer } = await import('./container-runner.js');
+
+  const agentGroup = getAllAgentGroups().find((g) => g.folder === targetFolder);
+  if (!agentGroup) {
+    log.warn('Tribunal: target agent group not found', { targetFolder });
+    return;
+  }
+
+  let session = findSessionForAgent(agentGroup.id, tribunalSession.messaging_group_id, tribunalSession.thread_id);
+  if (!session) {
+    const ts = new Date().toISOString();
+    session = {
+      id: randomUUID(),
+      agent_group_id: agentGroup.id,
+      messaging_group_id: tribunalSession.messaging_group_id,
+      thread_id: tribunalSession.thread_id,
+      agent_provider: agentGroup.agent_provider ?? null,
+      status: 'active',
+      container_status: 'stopped',
+      last_active: null,
+      created_at: ts,
+    };
+    createSession(session);
+  }
+
+  const inPath = inboundDbPath(agentGroup.id, session.id);
+  if (!fs.existsSync(inPath)) return;
+
+  const inDb = openIn(agentGroup.id, session.id);
+  try {
+    inDb
+      .prepare(
+        `INSERT INTO messages_in (id, seq, timestamp, status, tries, kind, platform_id, channel_type, thread_id, content)
+         VALUES (?, ?, datetime('now'), 'pending', 0, 'chat', ?, 'discord', ?, ?)`,
+      )
+      .run(
+        randomUUID(),
+        nextEvenSeq(inDb),
+        originalMsg.platform_id,
+        tribunalSession.thread_id,
+        JSON.stringify({ text: messageText }),
+      );
+  } finally {
+    inDb.close();
+  }
+
+  await wakeContainer(session);
+  log.info('Tribunal: routed to agent', { targetFolder, threadId: tribunalSession.thread_id });
 }

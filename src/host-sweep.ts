@@ -274,7 +274,7 @@ function resetStuckProcessingRows(
         reason,
       });
     } else {
-      const backoffMs = BACKOFF_BASE_MS * Math.pow(2, msg.tries);
+      const backoffMs = BACKOFF_BASE_MS * 2 ** msg.tries;
       const backoffSec = Math.floor(backoffMs / 1000);
       retryWithBackoff(inDb, msg.id, backoffSec);
       log.info('Reset stale message with backoff', {

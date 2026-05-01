@@ -17,9 +17,27 @@ function now() {
 beforeEach(() => {
   const db = initTestDb();
   runMigrations(db);
-  createAgentGroup({ id: 'ag-owner', name: 'Owner', folder: 'frontend-owner', agent_provider: null, created_at: now() });
-  createAgentGroup({ id: 'ag-reviewer', name: 'Reviewer', folder: 'frontend-reviewer', agent_provider: null, created_at: now() });
-  createAgentGroup({ id: 'ag-arbiter', name: 'Arbiter', folder: 'frontend-arbiter', agent_provider: null, created_at: now() });
+  createAgentGroup({
+    id: 'ag-owner',
+    name: 'Owner',
+    folder: 'frontend-owner',
+    agent_provider: null,
+    created_at: now(),
+  });
+  createAgentGroup({
+    id: 'ag-reviewer',
+    name: 'Reviewer',
+    folder: 'frontend-reviewer',
+    agent_provider: null,
+    created_at: now(),
+  });
+  createAgentGroup({
+    id: 'ag-arbiter',
+    name: 'Arbiter',
+    folder: 'frontend-arbiter',
+    agent_provider: null,
+    created_at: now(),
+  });
 });
 
 afterEach(() => {
@@ -57,7 +75,10 @@ describe('getTribunalSessionByThread', () => {
 describe('advanceTribunalSession', () => {
   it('owner done → moves to reviewer', () => {
     const s = createTribunalSession({
-      agentGroupId: 'ag-owner', messagingGroupId: 'mg-1', threadId: 't1', task: 'task',
+      agentGroupId: 'ag-owner',
+      messagingGroupId: 'mg-1',
+      threadId: 't1',
+      task: 'task',
     });
     const next = advanceTribunalSession(s.id, 'OWNER_DONE\nFiles changed: src/login.ts');
     expect(next?.current_role).toBe('reviewer');
@@ -65,7 +86,10 @@ describe('advanceTribunalSession', () => {
 
   it('reviewer approved → moves to arbiter', () => {
     const s = createTribunalSession({
-      agentGroupId: 'ag-owner', messagingGroupId: 'mg-1', threadId: 't2', task: 'task',
+      agentGroupId: 'ag-owner',
+      messagingGroupId: 'mg-1',
+      threadId: 't2',
+      task: 'task',
     });
     advanceTribunalSession(s.id, 'OWNER_DONE\nFiles changed: x');
     const next = advanceTribunalSession(s.id, 'REVIEWER_APPROVED');
@@ -74,7 +98,10 @@ describe('advanceTribunalSession', () => {
 
   it('reviewer issues → increments round, returns to owner', () => {
     const s = createTribunalSession({
-      agentGroupId: 'ag-owner', messagingGroupId: 'mg-1', threadId: 't3', task: 'task',
+      agentGroupId: 'ag-owner',
+      messagingGroupId: 'mg-1',
+      threadId: 't3',
+      task: 'task',
     });
     advanceTribunalSession(s.id, 'OWNER_DONE\nFiles changed: x');
     const next = advanceTribunalSession(s.id, 'REVIEWER_ISSUES\nfix null\nKEYWORDS: null');
@@ -84,7 +111,10 @@ describe('advanceTribunalSession', () => {
 
   it('arbiter approved → marks completed', () => {
     const s = createTribunalSession({
-      agentGroupId: 'ag-owner', messagingGroupId: 'mg-1', threadId: 't4', task: 'task',
+      agentGroupId: 'ag-owner',
+      messagingGroupId: 'mg-1',
+      threadId: 't4',
+      task: 'task',
     });
     advanceTribunalSession(s.id, 'OWNER_DONE\nFiles changed: x');
     advanceTribunalSession(s.id, 'REVIEWER_APPROVED');

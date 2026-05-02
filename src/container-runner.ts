@@ -3,7 +3,7 @@
  * Spawns agent containers with session folder + agent group folder mounts.
  * The container runs the v2 agent-runner which polls the session DB.
  */
-import { ChildProcess, execSync, spawn } from 'child_process';
+import { type ChildProcess, execSync, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 

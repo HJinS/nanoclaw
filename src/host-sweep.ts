@@ -129,6 +129,15 @@ async function sweep(): Promise<void> {
     log.error('Host sweep error', { err });
   }
 
+  // TRIBUNAL-HOOK:scheduler:start
+  try {
+    const { runTribunalScheduler } = await import('./tribunal/scheduler.js');
+    await runTribunalScheduler();
+  } catch (err) {
+    log.error('Tribunal scheduler error', { err });
+  }
+  // TRIBUNAL-HOOK:scheduler:end
+
   setTimeout(sweep, SWEEP_INTERVAL_MS);
 }
 
@@ -274,7 +283,7 @@ function resetStuckProcessingRows(
         reason,
       });
     } else {
-      const backoffMs = BACKOFF_BASE_MS * Math.pow(2, msg.tries);
+      const backoffMs = BACKOFF_BASE_MS * 2 ** msg.tries;
       const backoffSec = Math.floor(backoffMs / 1000);
       retryWithBackoff(inDb, msg.id, backoffSec);
       log.info('Reset stale message with backoff', {

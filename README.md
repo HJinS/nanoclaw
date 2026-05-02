@@ -17,19 +17,11 @@
 
 ---
 
-## This Fork — B2B Multi-Agent Framework
+## This Fork — Multi-Agent Framework
 
-This is a customized NanoClaw fork built for B2B project development. It adds a multi-agent pipeline on top of NanoClaw's container infrastructure, with three dedicated Discord channels for different workflows.
+This fork extends NanoClaw with a multi-agent pipeline for automated code workflows. It adds a Tribunal Loop, cron-based scheduling, context injection, and lightweight RAG memory on top of NanoClaw's container infrastructure.
 
-### Discord Channels
-
-| Channel | Mode | Description |
-|---------|------|-------------|
-| `#frontend` | Fully automatic | Three-agent Tribunal Loop runs autonomously |
-| `#figma` | User-led | Agent with full Figma read/write access assists on design tasks |
-| `#backend` | User-led | Agent with Spring OpenAPI spec injected assists on backend work |
-
-### Tribunal Loop (`#frontend`)
+### Tribunal Loop
 
 A three-agent verification pipeline that runs without human intervention:
 
@@ -43,12 +35,12 @@ Loop prevention: escalates after 3 rounds or when the Reviewer flags the same is
 
 ### Scheduler
 
-Cron-based triggers that auto-create Discord threads in `#frontend` and wake the Owner agent. Configured per agent group as code (no UI).
+Cron-based triggers that auto-create Discord threads and wake the Owner agent on schedule. Configured per agent group as code (no UI).
 
 ### Context Injection
 
-- **Figma MCP** — default project file is always injected into the frontend Owner's context. Per-task Figma URLs can be added inline. Access is scoped to a per-group project whitelist.
-- **Spring OpenAPI** — injected into the backend agent. Pulls from a live `/v3/api-docs` endpoint, falls back to a local `openapi.yaml`/`.json` file.
+- **Figma MCP** — injects Figma design data into agent context. Per-task Figma URLs can be added inline. Access is scoped to a per-group project whitelist.
+- **OpenAPI spec** — injects API spec into agent context. Pulls from a live `/v3/api-docs` endpoint, falls back to a local `openapi.yaml`/`.json` file.
 
 ### Memory (RAG)
 
@@ -58,10 +50,10 @@ SQLite FTS5 full-text search over three types of records: approved code snippets
 
 ```
 src/tribunal/
-  ├── orchestrator.ts       # #frontend Tribunal state machine (Owner → Reviewer → Arbiter)
+  ├── orchestrator.ts       # Tribunal state machine (Owner → Reviewer → Arbiter)
   ├── loop-guard.ts         # Infinite-loop prevention: max retry + keyword repeat detection
   ├── scheduler.ts          # Cron-based task triggers (IANA timezone-aware)
-  ├── context-injector.ts   # Figma read injection (#frontend) + OpenAPI spec injection (#backend)
+  ├── context-injector.ts   # Figma MCP injection + OpenAPI spec injection
   └── memory/
         ├── store.ts        # SQLite FTS5 search
         └── indexer.ts      # Indexes approved code and Tribunal decision logs

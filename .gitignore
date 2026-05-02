@@ -37,6 +37,10 @@ docs/superpowers/
 # IDE
 .idea/
 .vscode/
+.claude/
+
+# Local session context
+context.md
 
 # Skills system (local per-installation state)
 .nanoclaw/

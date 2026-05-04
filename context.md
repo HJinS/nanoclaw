@@ -139,9 +139,19 @@ Agent Containers (Bun)
 | 2 | Tribunal Orchestrator + Loop Guard (`#frontend`) | ✅ 완료 | `91f6899`, `86e6cff`, `7c35f79` |
 | 3 | Self-Healing Loop (Tribunal 통합) | ✅ 완료 | Tribunal 흐름에 통합, 별도 에이전트 없음 |
 | 4 | 스케줄러 (host-sweep 훅) | ✅ 완료 | `237c7aa` |
-| 5 | Figma MCP 연동 (`#figma` + `#frontend` 읽기 주입) | ✅ 완료 | MCP는 컨테이너 레벨, 호스트 주입은 `ac5e04e` |
-| 6 | Spring OpenAPI 주입 (`#backend`) | ✅ 완료 | `context-injector.ts` — live fetch + file fallback |
-| 7 | Lightweight RAG Memory | ✅ 완료 | `f4605a4` |
+| 5 | Figma MCP 연동 (`#pm` + `#frontend` 읽기 주입) | ⚠️ 코드만 작성됨 | `groups/pm/container.json` mcpServers 비어있음, 자격증명 미설정 |
+| 6 | Spring OpenAPI 주입 (`#backend`) | ⚠️ 코드만 작성됨 | `buildInjectedContext()` 라우팅에 연결 안됨, 엔드포인트 미설정 |
+| 7 | Lightweight RAG Memory | ⚠️ 코드만 작성됨 | DB/FTS5 테이블 있지만 주입/인덱싱 호출 연결 안됨 |
+| 8 | Tribunal Loop end-to-end 검증 | ❌ 미완료 | orchestrator 훅 연결됐지만 실제 흐름 미검증 |
+
+### 남은 실제 작업 (우선순위 순)
+
+| 작업 | 설명 |
+|------|------|
+| Figma MCP 설치 | Figma MCP 서버 패키지 설치 + `groups/pm/container.json` 설정 + OneCLI에 Figma 토큰 등록 |
+| OpenAPI 연결 | `buildInjectedContext()` 를 backend 에이전트 메시지 라우팅에 훅 연결 + 엔드포인트 URL 설정 |
+| RAG Memory 연결 | Owner 작업 시작 시 `buildMemoryContext()` 주입 + Arbiter 승인 후 indexer 호출 연결 |
+| Tribunal Loop 검증 | `#frontend`에 실제 작업 입력 → Owner→Reviewer→Arbiter 흐름 end-to-end 테스트 |
 
 ### 세션 진행 노트 (2026-05-01)
 

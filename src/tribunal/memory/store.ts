@@ -81,7 +81,8 @@ export function buildMemoryContext(agentGroupId: string, task: string): string {
         return {};
       }
     })();
-    const label = r.type === 'code' ? `코드 (${meta.file_path ?? '?'})` : r.type === 'decision' ? '결정' : '도메인 지식';
+    const label =
+      r.type === 'code' ? `코드 (${meta.file_path ?? '?'})` : r.type === 'decision' ? '결정' : '도메인 지식';
     lines.push(`### ${label}`);
     lines.push(r.content);
     lines.push('');

@@ -9,7 +9,13 @@
  */
 import type Database from 'better-sqlite3';
 
-import { getRunningSessions, getActiveSessions, createPendingQuestion, findSessionForAgent, createSession } from './db/sessions.js';
+import {
+  getRunningSessions,
+  getActiveSessions,
+  createPendingQuestion,
+  findSessionForAgent,
+  createSession,
+} from './db/sessions.js';
 import { getAgentGroup, getAllAgentGroups } from './db/agent-groups.js';
 import { loadWebhookIdentity, deliverViaWebhook } from './channels/discord-webhook.js';
 import { getDb, hasTable } from './db/connection.js';

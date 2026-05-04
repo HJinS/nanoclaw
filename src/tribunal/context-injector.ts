@@ -121,10 +121,7 @@ function formatOpenApiSpec(spec: unknown): string {
 
   if (endpoints.length === 0) return '';
 
-  const lines: string[] = [
-    `## Spring OpenAPI 스펙${info?.title ? ` — ${info.title}` : ''}`,
-    '',
-  ];
+  const lines: string[] = [`## Spring OpenAPI 스펙${info?.title ? ` — ${info.title}` : ''}`, ''];
   for (const ep of endpoints.slice(0, 30)) {
     lines.push(`- **${ep.method} ${ep.path}**${ep.summary ? ` — ${ep.summary}` : ''}`);
     if (ep.requestBody) lines.push(`  - Request: \`${ep.requestBody}\``);

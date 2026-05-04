@@ -54,11 +54,7 @@ async function isDue(agentGroupId: string, cronExpr: string, now: Date): Promise
   }
 }
 
-async function triggerTribunalTask(
-  agentGroupId: string,
-  messagingGroupId: string,
-  task: string,
-): Promise<void> {
+async function triggerTribunalTask(agentGroupId: string, messagingGroupId: string, task: string): Promise<void> {
   const fs = await import('node:fs');
   const { wakeContainer } = await import('../container-runner.js');
 

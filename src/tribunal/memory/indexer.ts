@@ -17,13 +17,10 @@ interface TribunalSessionRow {
  * Caller is responsible for providing the approved code snippet separately
  * via indexApprovedCode().
  */
-export function indexTribunalDecision(
-  tribunalSessionId: string,
-  arbiterMessage: string,
-): void {
-  const session = getDb()
-    .prepare('SELECT * FROM tribunal_sessions WHERE id = ?')
-    .get(tribunalSessionId) as TribunalSessionRow | undefined;
+export function indexTribunalDecision(tribunalSessionId: string, arbiterMessage: string): void {
+  const session = getDb().prepare('SELECT * FROM tribunal_sessions WHERE id = ?').get(tribunalSessionId) as
+    | TribunalSessionRow
+    | undefined;
 
   if (!session) return;
 

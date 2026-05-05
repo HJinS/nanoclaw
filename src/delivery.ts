@@ -503,10 +503,10 @@ export async function handleTribunalRouting(
 
   const targetFolder =
     updated.current_role === 'reviewer'
-      ? 'frontend-reviewer'
+      ? 'tribunal-reviewer'
       : updated.current_role === 'arbiter'
-        ? 'frontend-arbiter'
-        : 'frontend-owner';
+        ? 'tribunal-arbiter'
+        : 'tribunal-owner';
 
   await routeToTribunalAgent(tribunalSession, targetFolder, text, msg);
   return true;

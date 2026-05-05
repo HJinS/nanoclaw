@@ -20,21 +20,21 @@ beforeEach(() => {
   createAgentGroup({
     id: 'ag-owner',
     name: 'Owner',
-    folder: 'frontend-owner',
+    folder: 'tribunal-owner',
     agent_provider: null,
     created_at: now(),
   });
   createAgentGroup({
     id: 'ag-reviewer',
     name: 'Reviewer',
-    folder: 'frontend-reviewer',
+    folder: 'tribunal-reviewer',
     agent_provider: null,
     created_at: now(),
   });
   createAgentGroup({
     id: 'ag-arbiter',
     name: 'Arbiter',
-    folder: 'frontend-arbiter',
+    folder: 'tribunal-arbiter',
     agent_provider: null,
     created_at: now(),
   });

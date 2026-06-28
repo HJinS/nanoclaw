@@ -3,11 +3,7 @@ import { gateCommand } from './command-gate.js';
 
 describe('gateCommand /provider', () => {
   it('denies /provider for non-admin (null userId)', () => {
-    const result = gateCommand(
-      JSON.stringify({ text: '/provider lmstudio' }),
-      null,
-      'ag-test',
-    );
+    const result = gateCommand(JSON.stringify({ text: '/provider lmstudio' }), null, 'ag-test');
     expect(result).toEqual({ action: 'deny', command: '/provider' });
   });
 

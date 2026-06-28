@@ -25,6 +25,7 @@ export interface ProviderOptions {
   mcpServers?: Record<string, McpServerConfig>;
   env?: Record<string, string | undefined>;
   additionalDirectories?: string[];
+  model?: string;
 }
 
 export interface QueryInput {

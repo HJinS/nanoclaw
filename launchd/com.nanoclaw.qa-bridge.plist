@@ -6,7 +6,6 @@
     <string>com.nanoclaw.qa-bridge</string>
     <key>ProgramArguments</key>
     <array>
-        <string>{{NODE_PATH}}</string>
         <string>{{PROJECT_ROOT}}/node_modules/.bin/tsx</string>
         <string>{{PROJECT_ROOT}}/scripts/qa-bridge.ts</string>
     </array>

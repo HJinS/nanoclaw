@@ -19,7 +19,7 @@
  */
 import { getChannelAdapter } from './channels/channel-registry.js';
 import { gateCommand } from './command-gate.js';
-import { getAgentGroup } from './db/agent-groups.js';
+import { getAgentGroup, updateAgentGroup } from './db/agent-groups.js';
 import { recordDroppedMessage } from './db/dropped-messages.js';
 import {
   createMessagingGroup,
@@ -30,7 +30,9 @@ import { findSessionForAgent } from './db/sessions.js';
 import { startTypingRefresh, stopTypingRefresh } from './modules/typing/index.js';
 import { log } from './log.js';
 import { resolveSession, writeSessionMessage, writeOutboundDirect } from './session-manager.js';
-import { wakeContainer } from './container-runner.js';
+import { wakeContainer, killContainer } from './container-runner.js';
+import { listProviderContainerConfigNames } from './providers/provider-container-registry.js';
+import { readEnvFile } from './env.js';
 import { getSession } from './db/sessions.js';
 import type { AgentGroup, MessagingGroup, MessagingGroupAgent } from './types.js';
 import type { InboundEvent } from './channels/adapter.js';
@@ -445,6 +447,11 @@ async function deliverToAgent(
       log.info('Admin command denied by gate', { command: gate.command, userId, agentGroupId: agent.agent_group_id });
       return;
     }
+    const cmdText = (safeParseContent(event.message.content).text ?? '').trim();
+    if (cmdText.toLowerCase().startsWith('/provider')) {
+      await handleProviderCommand(cmdText, session.agent_group_id, session.id, deliveryAddr);
+      return;
+    }
   }
 
   writeSessionMessage(session.agent_group_id, session.id, {
@@ -493,4 +500,52 @@ async function deliverToAgent(
 function messageIdForAgent(baseId: string | undefined, agentGroupId: string): string {
   const id = baseId && baseId.length > 0 ? baseId : generateId();
   return `${id}:${agentGroupId}`;
+}
+
+async function handleProviderCommand(
+  text: string,
+  agentGroupId: string,
+  sessionId: string,
+  deliveryAddr: { channelType: string | null; platformId: string | null; threadId: string | null },
+): Promise<void> {
+  const replyId = () => `provider-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const reply = (msg: string) =>
+    writeOutboundDirect(agentGroupId, sessionId, {
+      id: replyId(),
+      kind: 'chat',
+      platformId: deliveryAddr.platformId,
+      channelType: deliveryAddr.channelType,
+      threadId: deliveryAddr.threadId,
+      content: JSON.stringify({ text: msg }),
+    });
+
+  const args = text.trim().split(/\s+/);
+  const providerArg = args[1]?.toLowerCase();
+
+  const validProviders = new Set(['claude', ...listProviderContainerConfigNames()]);
+
+  if (!providerArg) {
+    const group = getAgentGroup(agentGroupId);
+    const current = group?.agent_provider ?? 'claude (default)';
+    reply(`Current provider: ${current}`);
+    return;
+  }
+
+  if (!validProviders.has(providerArg)) {
+    reply(`Unknown provider: ${providerArg}. Available: ${[...validProviders].join(', ')}`);
+    return;
+  }
+
+  if (providerArg === 'lmstudio') {
+    const env = readEnvFile(['LMSTUDIO_BASE_URL']);
+    if (!env.LMSTUDIO_BASE_URL) {
+      reply('Cannot switch to lmstudio: LMSTUDIO_BASE_URL is not set in .env');
+      return;
+    }
+  }
+
+  updateAgentGroup(agentGroupId, { agent_provider: providerArg === 'claude' ? null : providerArg });
+  killContainer(sessionId, 'provider-switch');
+  reply(`Provider switched to ${providerArg} ✓`);
+  log.info('Provider switched via command', { agentGroupId, provider: providerArg });
 }

@@ -27,6 +27,7 @@ groups/*
 
 # Local design specs (brainstorming artifacts, not for repo)
 docs/superpowers/
+.plans/
 
 # Temp files
 .tmp-*
